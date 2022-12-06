@@ -1,5 +1,4 @@
 from player import *
-# from level import *
 
 # initialize pygame
 pygame.init()
@@ -15,12 +14,14 @@ pygame.display.set_icon(icon)
 
 # sound
 pygame.mixer.init()
-jump_sound = pygame.mixer.Sound('sound/jump.ogg')        
+#jump_sound = pygame.mixer.Sound('sound/jump.ogg')        
         
-        
+# game variables
+main_menu = True
+room_number = 0
         
 # initialize player
-player = Player(100.0, window_height - 5 * tile_size)
+player = Player(starting_pos[0][0], starting_pos[0][1])
 # initialize background
 background_image = pygame.image.load('tile/bg_cave.png')
 background_image = pygame.transform.scale(background_image, (window_width, window_height)).convert() # resize image and convert to non-transparent to prevent lag
@@ -41,18 +42,25 @@ while run:
     # Player -------------------------------------------------+
     
     player.update()
-    
+    '''
     if player.get_pos()[0] > window_width:
         room_number += 1
         room = World(current_room_data)
         player.set_pos(0,0)
-    
+    '''
     player.debug() # draw_hitboxes, draw_grid
     
     if player.ground_attacking:
         player.attack()
     if player.air_attacking:
         player.attack()
+        
+    if player.offscreen:
+        room_number += 1
+        player.offscreen = False
+        room_data = []
+        room = World(update_room(1))
+        player.reset_pos(1)
     
     # Display ------------------------------------------------+
     pygame.display.update()

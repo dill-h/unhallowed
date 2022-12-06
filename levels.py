@@ -1,3 +1,5 @@
+import pickle
+from os import path
 # Room data --------------------------------------------------+
 room0_data = [
 [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5], # 1
@@ -23,3 +25,8 @@ room0_data = [
 room1_data = [
 [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 15, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
 ]
+
+room = 0
+with open(f'level/room{room}_data', 'wb') as pickle_out:
+        pickle.dump(room0_data, pickle_out)
+        pickle_out.close()

@@ -128,6 +128,7 @@ class Player:
         self.air_attacking = False
         
         # pos creds
+        self.offscreen = False
         self.rect.x = x0
         self.rect.y = y0
         self.width = 50 * 2
@@ -246,6 +247,9 @@ class Player:
         if self.rect.bottom > window_height:
             self.rect.bottom = window_height
             self.dy = 0
+        
+        if self.rect.right > window_width:
+            self.offscreen = True
     
         # Animation Handling -------------------------------------------------------------------------------------------------+
         
@@ -360,6 +364,10 @@ class Player:
             if self.aattackframe >= 5:
                 self.aattackframe = 0
                 self.air_attacking = False
+                
+    def reset_pos(self, room_num):
+        self.rect.x = starting_pos[room_num][0]
+        self.rect.y = starting_pos[room_num][1]
         
     def debug(self, draw_hitboxes = False, draw_grid = False):
         self.draw_hitboxes = draw_hitboxes
