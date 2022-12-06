@@ -1,7 +1,7 @@
 # unhallowed
+Requires [pygame](https://pypi.org/project/pygame/).
 ---
-
--- CREDITS --
+## CREDITS
 
 - Adventurer Sprites by rvros https://rvros.itch.io/animated-pixel-hero
 - Double Jump effect by Viktor https://v-ktor.itch.io/pixelated-attackhit-animations
