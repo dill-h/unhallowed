@@ -1,7 +1,6 @@
 import pygame
 import pickle
 from os import path
-from levels import *
 
 tile_size = 32
 window_width = 32 * tile_size
@@ -15,8 +14,6 @@ window = pygame.display.set_mode((window_width, window_height))
 7 0 3
 6 5 4  
 '''
-
-room_index = [room0_data, room1_data]
 room_number = 0
 
 
@@ -87,8 +84,8 @@ class World:
         for tile in self.tile_list:
             window.blit(tile[0], tile[1])
 
-starting_pos = [[5 * tile_size, window_height - 16 * tile_size],
-                [2 * tile_size, window_height - 16 * tile_size]
+starting_pos = [[2 * tile_size, window_height - 4 * tile_size + 5],
+                [0 * tile_size, window_height - 15 * tile_size + 5]
                 ]
 
 def update_room(rn):

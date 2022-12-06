@@ -147,7 +147,7 @@ class Player:
         self.rect.x = x0
         self.rect.y = y0
         
-    def update(self):
+    def update(self, room):
         # HITBOXES
         # COLLISION/HURTBOX
         self.hitbox = Rect(self.rect.x + 25, self.rect.y + 10, self.hitbox_width, self.hitbox_height)
@@ -213,6 +213,7 @@ class Player:
         
         #check for collision
         self.airborne = True
+        self.jumping = True
         #self.jumpframe = 7
         for tile in room.tile_list:
             #check for collision in x direction
@@ -239,7 +240,6 @@ class Player:
                     self.air_attacking = False
                     self.aattackframe = 0
                     self.jumpframe = 0
-        
         #update player coordinates
         self.rect.x += self.dx
         self.rect.y += self.dy
@@ -247,8 +247,12 @@ class Player:
         if self.rect.bottom > window_height:
             self.rect.bottom = window_height
             self.dy = 0
+            
+        if self.rect.left < 0:
+            self.rect.left = 0
+            self.dx = 0
         
-        if self.rect.right > window_width:
+        if self.hitbox.right > window_width:
             self.offscreen = True
     
         # Animation Handling -------------------------------------------------------------------------------------------------+
@@ -375,7 +379,7 @@ class Player:
         
         if pygame.key.get_pressed()[pygame.K_BACKQUOTE]:
             self.draw_hitboxes = not self.draw_hitboxes
-            self.draw_grid = not self.draw_grid
+            # self.draw_grid = not self.draw_grid
         
         if self.draw_hitboxes:
             pygame.draw.rect(window, (0,0,255), self.hitbox,2) # player hitbox display

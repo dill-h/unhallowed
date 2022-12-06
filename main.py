@@ -25,7 +25,9 @@ player = Player(starting_pos[0][0], starting_pos[0][1])
 # initialize background
 background_image = pygame.image.load('tile/bg_cave.png')
 background_image = pygame.transform.scale(background_image, (window_width, window_height)).convert() # resize image and convert to non-transparent to prevent lag
- 
+
+#initialize room
+room = World(update_room(room_number))
  
  
 # Game loop --------------------------------------------------+
@@ -41,7 +43,7 @@ while run:
     
     # Player -------------------------------------------------+
     
-    player.update()
+    player.update(room)
     '''
     if player.get_pos()[0] > window_width:
         room_number += 1
@@ -59,17 +61,18 @@ while run:
         room_number += 1
         player.offscreen = False
         room_data = []
-        room = World(update_room(1))
-        player.reset_pos(1)
+        room = World(update_room(room_number))
+        player.reset_pos(room_number)
+        
     
     # Display ------------------------------------------------+
     pygame.display.update()
     
-    # Check if game needs to be closed
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
+    # Check for exit -----------------------------------------+
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
         run = False
+    if pygame.key.get_pressed()[pygame.K_LCTRL] and pygame.key.get_pressed()[pygame.K_w]:
+        run = False
+    
 # ------------------------------------------------------------+
 pygame.quit()
