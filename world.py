@@ -88,6 +88,39 @@ starting_pos = [[2 * tile_size, window_height - 4 * tile_size + 5],
                 [0 * tile_size, window_height - 15 * tile_size + 5]
                 ]
 
+# Putting this here so I don't have to add yet another module to the import chain
+class Button:
+    def __init__(self, x, y, name):
+        self.image_inactive = pygame.image.load(f'titlescreen/btn_{name}0.png')
+        self.image_active = pygame.image.load(f'titlescreen/btn_{name}1.png')
+        self.rect = self.image_inactive.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+
+    def draw(self):
+        action = False
+        
+        #get mouse position
+        pos = pygame.mouse.get_pos()
+
+        #check mouseover and clicked conditions
+        if self.rect.collidepoint(pos):
+            window.blit(self.image_active, (self.rect.x, self.rect.y))
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                action = True
+                self.clicked = True
+        else:
+            window.blit(self.image_inactive, (self.rect.x, self.rect.y))
+
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+            
+        return action
+
+play_button = Button(window_width // 2 - 64, window_height // 2, 'play')
+info_button = Button(window_width // 2 - 64, window_height // 2 + 64, 'info')
+quit_button = Button(window_width // 2 - 64, window_height // 2 + 128, 'quit')
+# ------------------------------------------------------------------------------+
 def update_room(rn):
     
     if path.exists(f'level/room{rn}_data'):

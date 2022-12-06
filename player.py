@@ -12,6 +12,14 @@ window_height = 18 * tile_size
 room_number = 0
 window = pygame.display.set_mode((window_width, window_height))
 
+# PLAYER SOUNDS
+pygame.mixer.init()
+jump_sound = pygame.mixer.Sound('sound/double_jump.wav')
+djump_sound = pygame.mixer.Sound('sound/jump.wav')
+gattack_sound = pygame.mixer.Sound('sound/ground_attack.wav')
+aattack_sound = pygame.mixer.Sound('sound/air_attack.wav')
+sfx_volume = 0.5
+
 class Player:
     def __init__(self, x0, y0):
         self.image = pygame.image.load('player/idle/idle0.png')
@@ -114,12 +122,13 @@ class Player:
         self.djeffectframe = 0
         self.fallframe = 0
         self.airborne = True
-        self.fallanim = False
+        self.fallanim = True
         self.left = False
         self.right = False
         self.direction = 'R'
-        self.jumping = False
-        self.doublejumped = False
+        self.jumping = True
+        self.doublejumped = True
+        self.landing = True
         
         # combat flags
         self.gattackframe = 0
@@ -160,21 +169,35 @@ class Player:
         # input
         key = pygame.key.get_pressed()
         
-        if key[pygame.K_o] and not self.jumping and not self.ground_attacking:
+        if key[pygame.K_o] and not self.jumping and not self.ground_attacking and not self.airborne:
             self.vel_y = -15
             self.jumpframe = 0
             self.jumping = True
             self.airborne = True
+            self.landing = False
+            pygame.mixer.Sound.play(jump_sound).set_volume(sfx_volume)
+            
         # if key[pygame.K_o] and self.jumping and self.fall and not self.doublejumped:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_o and self.jumping and not self.doublejumped:
+                if event.key == pygame.K_o and self.jumping and not self.doublejumped and self.airborne and self.able_to_double_jump:
                     self.vel_x *= 1.5
                     self.vel_y = -15
                     self.jumpframe = 0
                     self.djeffectframe = 0
                     self.doublejumped = True
                     self.fallanim = False
+                    pygame.mixer.Sound.play(djump_sound).set_volume(sfx_volume)
+                    
+                if event.key == pygame.K_k:
+                    if self.airborne and not self.ground_attacking and not self.air_attacking and not self.landing:
+                        pygame.mixer.Sound.play(aattack_sound).set_volume(sfx_volume)
+                           
+                    elif not self.airborne and not self.ground_attacking and not self.air_attacking:
+                        pygame.mixer.Sound.play(gattack_sound).set_volume(sfx_volume)
+                        
+                    self.attack()
+                    
             
             #pygame.mixer.Sound.play(jump_sound)
             
@@ -198,8 +221,12 @@ class Player:
             self.right = False
             self.runframe = 0
         
-        if key[pygame.K_k]:
-            self.attack()
+        '''if key[pygame.K_k]:
+            if self.airborne:
+                pygame.mixer.Sound.play(aattack_sound).set_volume(sfx_volume)
+            else:
+                pygame.mixer.Sound.play(gattack_sound).set_volume(sfx_volume)
+            self.attack()'''
         
         
         # GRAVITYYYYYY
@@ -211,9 +238,13 @@ class Player:
         if self.vel_y > 0:
             self.fall = True
         
+        if self.vel_y > -10:
+            self.able_to_double_jump = True
+        
         #check for collision
-        self.airborne = True
         self.jumping = True
+        self.airborne = True
+        self.landing = False
         #self.jumpframe = 7
         for tile in room.tile_list:
             #check for collision in x direction
@@ -236,10 +267,17 @@ class Player:
                     self.doublejumped = False
                     self.fallanim = False
                     self.fall = False
+                    self.able_to_double_jump = False
                     self.airborne = False
                     self.air_attacking = False
                     self.aattackframe = 0
                     self.jumpframe = 0
+                    self.landing = False
+                
+            # check if landing is imminent
+            #if tile[1].colliderect(self.hitbox.x, self.hitbox.y + 20, self.hitbox_width, self.hitbox_height):
+                #self.landing = True
+        
         #update player coordinates
         self.rect.x += self.dx
         self.rect.y += self.dy
@@ -291,8 +329,11 @@ class Player:
             elif self.direction == 'R':
                 if not key[pygame.K_s]:
                     window.blit(self.idle_anim_right[self.idleframe], (self.rect.x, self.rect.y))
+                    
                 else:
                     window.blit(self.crouch_anim_right[self.idleframe], (self.rect.x, self.rect.y))
+                    
+                    
                 if time.time() - self.idle_frame_start > 0.15:
                     self.idleframe += 1        
                     self.idle_frame_start = time.time()
