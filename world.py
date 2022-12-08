@@ -119,6 +119,7 @@ class Button:
 
 play_button = Button(window_width // 2 - 64, window_height // 2, 'play')
 info_button = Button(window_width // 2 - 64, window_height // 2 + 64, 'info')
+back_button = Button(window_width // 2 - 64, window_height // 2 + 64, 'back')
 quit_button = Button(window_width // 2 - 64, window_height // 2 + 128, 'quit')
 # ------------------------------------------------------------------------------+
 def update_room(rn):
