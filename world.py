@@ -1,4 +1,7 @@
 import pygame
+from pygame.locals import *
+import random
+import time
 import pickle
 from os import path
 
@@ -40,6 +43,11 @@ c_FBs = pygame.image.load('tile/c_FBs.png')
 c_FBl = pygame.image.load('tile/c_FBl.png')
 c_FBc = pygame.image.load('tile/c_FBc.png')
 c_FBr = pygame.image.load('tile/c_FBr.png')
+
+# CAVE - ENEMIES
+c_slime = pygame.image.load('enemy/slime/idle/idle0.png')
+
+
 tileset =  {1: c_SW,
             2: c_S,
             3: c_SE,
@@ -56,9 +64,12 @@ tileset =  {1: c_SW,
             14: c_FBs,
             15: c_FBl,
             16: c_FBc,
-            17: c_FBr
+            17: c_FBr,
+            18: c_slime
             }
+enemy_group = pygame.sprite.Group()
 
+    
 class World:
     def __init__(self, data):
         self.tile_list = []
@@ -71,22 +82,182 @@ class World:
             tile = (image, image_rect)
             self.tile_list.append(tile)
             
+        def enemyify(image_file):
+            foo = 'bar'
+            
         row_count = 0    
         for row in data:
             col_count = 0
             for tile in row:
-                if tile != 0:
+                if tile != 0 and tile != 18:
                     tileify(tileset[tile])
+                    
+                elif tile == 18:
+                    slime = Slime(col_count * tile_size + 16, row_count * tile_size - 14)
+                    enemy_group.add(slime)
                 col_count += 1
             row_count += 1
             
     def draw(self):
         for tile in self.tile_list:
             window.blit(tile[0], tile[1])
+            
+            
 
-starting_pos = [[2 * tile_size, window_height - 4 * tile_size + 5],
-                [0 * tile_size, window_height - 15 * tile_size + 5]
-                ]
+class Slime(pygame.sprite.Sprite):
+    def __init__(self, x0, y0, right = False):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load('enemy/slime/chassis.png')
+        self.image = pygame.transform.scale(self.image, (64, 50))
+        self.rect = self.image.get_rect()
+        self.rect.x = x0
+        self.rect.y = y0
+        # vars
+        self.dead = False
+        self.right = right
+        self.move_counter = 0
+        self.wait_counter = 0
+        self.stopped = False
+        self.direction = 'L'
+        
+        # animation vars
+        self.idleframe = 0
+        self.moveframe = 0
+        self.dieframe = 0
+        self.gamefeel_counter = 0
+        
+        
+        # initialize animations
+        
+        # IDLE
+        self.idle_frame_start = time.time()
+        self.idle_anim_left = []
+        self.idle_anim_right = []
+        for f in range(0,4):
+            frame_left = pygame.image.load(f'enemy/slime/idle/idle{f}.png')
+            frame_left = pygame.transform.scale(frame_left, (64, 50))
+            frame_right = pygame.transform.flip(frame_left, True, False)
+            self.idle_anim_left.append(frame_left)
+            self.idle_anim_right.append(frame_right)
+        
+        # MOVE
+        self.move_frame_start = time.time()
+        self.move_anim_left = []
+        self.move_anim_right = []
+        for f in range(0,4):
+            frame_left = pygame.image.load(f'enemy/slime/move/move{f}.png')
+            frame_left = pygame.transform.scale(frame_left, (64, 50))
+            frame_right = pygame.transform.flip(frame_left, True, False)
+            self.move_anim_left.append(frame_left)
+            self.move_anim_right.append(frame_right)
+            
+        # DIE
+        self.die_frame_start = time.time()
+        self.die_anim_left = []
+        self.die_anim_right = []
+        for f in range(0,4):
+            frame_left = pygame.image.load(f'enemy/slime/death/die{f}.png')
+            frame_left = pygame.transform.scale(frame_left, (64, 50))
+            frame_right = pygame.transform.flip(frame_left, True, False)
+            self.die_anim_left.append(frame_left)
+            self.die_anim_right.append(frame_right)
+        
+        
+        
+        
+    def die(self):
+            self.dead = True
+        
+    def update(self, hero, tiles = 2):
+        self.hitbox = Rect(self.rect.x + 4, self.rect.y + 20, 56, 28)
+        
+        if self.right and not self.stopped:
+            self.rect.x += 1
+            self.move_counter += 1
+        elif not self.right and not self.stopped:
+            self.rect.x -= 1
+            self.move_counter += 1
+        if abs(self.move_counter) > 32 * tiles:
+            if self.right:
+                self.direction = 'R'
+            else:
+                self.direction = 'L'
+            self.stopped = True
+            self.wait_counter += 1
+            if self.wait_counter > random.randint(30,120):
+                self.right = not self.right
+                self.move_counter = 0
+                self.wait_counter = 0
+                self.stopped = False
+            
+        if hero.ground_attacking:
+            if self.rect.colliderect(hero.hitbox_gattackL) and hero.direction == 'L' and hero.gattackframe >= 2:
+                self.die()
+            if self.rect.colliderect(hero.hitbox_gattackR) and hero.direction == 'R' and hero.gattackframe >= 2:
+                self.die()
+        if hero.air_attacking:
+            if self.rect.colliderect(hero.hitbox_aattack) and hero.aattackframe >= 2:
+                self.die()
+                
+        # Animation handling ---------------------------------+
+        if self.idleframe >= 4:
+            self.idleframe = 0
+            
+        if self.moveframe >= 4:
+            self.moveframe = 0
+            
+        if self.dieframe >= 4:
+            for enemy in enemy_group:
+                if enemy.dead:
+                    enemy_group.remove(enemy)
+            self.dieframe = -1
+                    
+        
+        
+        if self.dead:
+            if self.right:
+                window.blit(self.die_anim_right[self.dieframe], (self.rect.x, self.rect.y))
+                if time.time() - self.die_frame_start > 0.1:
+                    self.dieframe += 1        
+                    self.die_frame_start = time.time()
+            elif not self.right:
+                window.blit(self.die_anim_left[self.dieframe], (self.rect.x, self.rect.y))
+                if time.time() - self.die_frame_start > 0.1:
+                    self.dieframe += 1        
+                    self.die_frame_start = time.time()
+
+        else:
+            if self.stopped and self.direction == 'L':
+                window.blit(self.idle_anim_left[self.idleframe], (self.rect.x, self.rect.y))
+                if time.time() - self.idle_frame_start > 0.15:
+                    self.idleframe += 1        
+                    self.idle_frame_start = time.time()
+                    
+            elif self.stopped and self.direction == 'R':
+                window.blit(self.idle_anim_right[self.idleframe], (self.rect.x, self.rect.y))
+                if time.time() - self.idle_frame_start > 0.15:
+                    self.idleframe += 1        
+                    self.idle_frame_start = time.time()
+            else:
+                if self.right:
+                    window.blit(self.move_anim_right[self.moveframe], (self.rect.x, self.rect.y))
+                    if time.time() - self.move_frame_start > 0.15:
+                        self.moveframe += 1        
+                        self.move_frame_start = time.time()
+                else:
+                    window.blit(self.move_anim_left[self.moveframe], (self.rect.x, self.rect.y))
+                    if time.time() - self.move_frame_start > 0.15:
+                        self.moveframe += 1        
+                        self.move_frame_start = time.time()
+
+            
+        
+            
+
+
+class Pickup:
+    def __init__(self, pickup_type):
+        foo = 'bar'
 
 # Putting this here so I don't have to add yet another module to the import chain
 class Button:

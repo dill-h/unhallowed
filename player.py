@@ -1,5 +1,3 @@
-import pygame, time
-from pygame.locals import *
 from world import *
 
 if __name__ == '__main__':
@@ -27,7 +25,7 @@ class Player:
         self.rect = self.image.get_rect()
         self.room_number = 0
         
-        # ---- ANIMATIONS ----
+        # Load animations ------------------------------------+
         
         # HURT
         self.reel_frame_start = time.time()
@@ -139,11 +137,13 @@ class Player:
         self.landing = True
         
         # combat flags
+        self.hp = 3
         self.gattackframe = 0
         self.ground_attacking = False
         self.aattackframe = 0
         self.air_attacking = False
         self.reeling = False
+        
         
         # pos creds
         self.offscreen = False
@@ -154,9 +154,11 @@ class Player:
         self.hitbox_width = self.width // 2
         self.hitbox_height = self.height - 10
         self.vel_x = 6
-        #self.dx = 5
-        #self.dy = 0
         self.vel_y = 0
+        self.starting_pos = [[0 * tile_size, window_height - 4 * tile_size + 5],
+                [0 * tile_size, window_height - 15 * tile_size + 5],
+                [0 * tile_size, window_height - 10 * tile_size + 5]
+                ]
         
     def get_pos(self):
         return [self.rect.x, self.rect.y]
@@ -166,8 +168,8 @@ class Player:
         self.rect.y = y0
         
     def reset_pos(self, room_num):
-        self.rect.x = starting_pos[room_num][0]
-        self.rect.y = starting_pos[room_num][1]
+        self.rect.x = self.starting_pos[room_num][0]
+        self.rect.y = self.starting_pos[room_num][1]
     
     def update(self, room):
         # HITBOXES
@@ -182,7 +184,7 @@ class Player:
         # input
         key = pygame.key.get_pressed()
         
-        if key[pygame.K_o] and not self.jumping and not self.ground_attacking and not self.airborne:
+        if key[pygame.K_o] and not self.jumping and not self.ground_attacking and not self.airborne and not self.reeling:
             self.vel_y = -17
             self.jumpframe = 0
             self.jumping = True
@@ -194,6 +196,7 @@ class Player:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_o and self.jumping and not self.doublejumped and self.airborne and self.able_to_double_jump:
+                    self.reeling = False
                     self.vel_x *= 1.5
                     self.vel_y = -17
                     self.jumpframe = 0
@@ -202,7 +205,7 @@ class Player:
                     self.fallanim = False
                     pygame.mixer.Sound.play(djump_sound).set_volume(sfx_volume)
                     
-                if event.key == pygame.K_k:
+                if event.key == pygame.K_k and not self.reeling:
                     if self.airborne and not self.ground_attacking and not self.air_attacking and not self.landing:
                         pygame.mixer.Sound.play(aattack_sound).set_volume(sfx_volume)
                            
@@ -219,12 +222,12 @@ class Player:
             self.jumping = False
         ''' # if enabled this turns on infinite midair jumps
         
-        if key[pygame.K_a] and not self.ground_attacking:
+        if key[pygame.K_a] and not self.ground_attacking and not self.reeling:
             self.dx -= self.vel_x
             self.left = True
             self.right = False
             self.direction = 'L'
-        elif key[pygame.K_d] and not self.ground_attacking:
+        elif key[pygame.K_d] and not self.ground_attacking and not self.reeling:
             self.dx += self.vel_x
             self.left = False
             self.right = True
@@ -286,6 +289,7 @@ class Player:
                     self.aattackframe = 0
                     self.jumpframe = 0
                     self.landing = False
+                    self.reeling = False
                 
             # check if landing is imminent
             #if tile[1].colliderect(self.hitbox.x, self.hitbox.y + 20, self.hitbox_width, self.hitbox_height):
@@ -388,9 +392,9 @@ class Player:
                     self.djeffect_frame_start = time.time()
         # Hurt state
         elif self.reeling:
-            if self.left:
+            if self.direction == 'L':
                 window.blit(self.reel_anim_left, (self.rect.x, self.rect.y))
-            elif self.right:
+            elif self.direction == 'R':
                 window.blit(self.reel_anim_right, (self.rect.x, self.rect.y))
             
                     
@@ -426,6 +430,24 @@ class Player:
                 self.aattackframe = 0
                 self.air_attacking = False
                 
+    def hurt(self):
+        self.hp -= 1
+        hit_x_pos = self.rect.centerx
+        if not self.reeling:
+            self.vel_y = -14
+            ouch_counter = 60
+            self.reeling = True
+            while self.reeling and ouch_counter > 0:
+                # horizontal gravity?
+                if self.direction == 'L':
+                    while abs(self.rect.centerx - hit_x_pos) < 60:
+                        self.rect.x += 1
+                elif self.direction == 'R':
+                    while abs(self.rect.centerx - hit_x_pos) < 60:
+                        self.rect.x -= 1
+                ouch_counter -= 1
+        
+                
     def die(self, room_num, deaths):
         dead = False
         if self.rect.bottom > window_height:
@@ -437,6 +459,7 @@ class Player:
         
         return dead
         
+    # Player Debug --------------------------------------------+
     def debug(self, draw_hitboxes = False, draw_grid = False, hurt_toggle = False):
         self.draw_hitboxes = draw_hitboxes
         self.draw_grid = draw_grid
@@ -459,6 +482,8 @@ class Player:
                 pygame.draw.line(window, (255, 255, 255), (line * tile_size, 0), (line * tile_size, window_height))
         
         if self.hurt_toggle:
-            self.reeling = True
-        else:
-            self.reeling = False
+            self.hurt()
+       # else:
+        #    self.reeling = False
+        
+    # --------------------------------------------------------+

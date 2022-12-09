@@ -14,19 +14,20 @@ def main():
     pygame.display.set_icon(icon)
 
     # Sound ------------------------------------------------------+
-    music_volume = 0.5
+    music_volume = 0.0 #0.5
     pygame.mixer.music.load('sound/title.ogg')
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play()
             
     # game variables
-    main_menu = True #True
+    main_menu = not True #True
     info_menu = False #False
-    room_number = 0
+    room_number = 0 #0
     falls = 1
+    hearts = 3
             
     # initialize player
-    player = Player(starting_pos[0][0], starting_pos[0][1], 0)
+    player = Player(0, window_height - (4*32+5), 0)
     # initialize background
     background_image = pygame.image.load('tile/bg_cave.png')
     background_image = pygame.transform.scale(background_image, (window_width, window_height)).convert() # resize image and convert to non-transparent to prevent lag
@@ -41,8 +42,10 @@ def main():
         pygame.mixer.music.stop()
         pygame.mixer.music.unload()
 
-    #initialize room
+    # initialize room
     room = World(update_room(room_number))
+    
+    #initialize enemies
 
     run = True
     while run:
@@ -82,12 +85,12 @@ def main():
 
     # Main game loop ---------------------------------------------+
         else:
-            # background image
+            # Room -----------------------------------------------+
             window.blit(background_image, (0, 0))
             
             room.draw()
             
-            # Player -------------------------------------------------+
+            # Player ---------------------------------------------+
             
             player.update(room)
 
@@ -107,6 +110,11 @@ def main():
             if player.die(room_number, falls):
                 print("Oops")
                 falls += 1
+                
+        # Enemies ------------------------------------------------+
+        
+        enemy_group.update(player)
+        enemy_group.draw(window)
             
         
         # Display ------------------------------------------------+
