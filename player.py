@@ -21,10 +21,11 @@ aattack_sound = pygame.mixer.Sound('sound/air_attack.wav')
 sfx_volume = 0.5
 
 class Player:
-    def __init__(self, x0, y0):
+    def __init__(self, x0, y0, rn = 0):
         self.image = pygame.image.load('player/idle/idle0.png')
         self.image = pygame.transform.scale(self.image, (100, 74))
         self.rect = self.image.get_rect()
+        self.room_number = 0
         
         # ---- ANIMATIONS ----
         
@@ -128,6 +129,7 @@ class Player:
         self.direction = 'R'
         self.jumping = True
         self.doublejumped = True
+        self.able_to_double_jump = False
         self.landing = True
         
         # combat flags
@@ -144,7 +146,7 @@ class Player:
         self.height = 37 * 2
         self.hitbox_width = self.width // 2
         self.hitbox_height = self.height - 10
-        self.vel_x = 5
+        self.vel_x = 6
         #self.dx = 5
         #self.dy = 0
         self.vel_y = 0
@@ -156,6 +158,10 @@ class Player:
         self.rect.x = x0
         self.rect.y = y0
         
+    def reset_pos(self, room_num):
+        self.rect.x = starting_pos[room_num][0]
+        self.rect.y = starting_pos[room_num][1]
+    
     def update(self, room):
         # HITBOXES
         # COLLISION/HURTBOX
@@ -170,7 +176,7 @@ class Player:
         key = pygame.key.get_pressed()
         
         if key[pygame.K_o] and not self.jumping and not self.ground_attacking and not self.airborne:
-            self.vel_y = -15
+            self.vel_y = -17
             self.jumpframe = 0
             self.jumping = True
             self.airborne = True
@@ -182,7 +188,7 @@ class Player:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_o and self.jumping and not self.doublejumped and self.airborne and self.able_to_double_jump:
                     self.vel_x *= 1.5
-                    self.vel_y = -15
+                    self.vel_y = -17
                     self.jumpframe = 0
                     self.djeffectframe = 0
                     self.doublejumped = True
@@ -260,8 +266,8 @@ class Player:
                 #check if above the ground i.e. falling
                 elif self.vel_y >= 0:
                     self.dy = tile[1].top - self.hitbox.bottom
-                    if self.vel_x != 5:
-                        self.vel_x = 5
+                    if self.vel_x != 6:
+                        self.vel_x = 6
                     self.vel_y = 0
                     self.jumping = False
                     self.doublejumped = False
@@ -281,10 +287,6 @@ class Player:
         #update player coordinates
         self.rect.x += self.dx
         self.rect.y += self.dy
-
-        if self.rect.bottom > window_height:
-            self.rect.bottom = window_height
-            self.dy = 0
             
         if self.rect.left < 0:
             self.rect.left = 0
@@ -410,9 +412,16 @@ class Player:
                 self.aattackframe = 0
                 self.air_attacking = False
                 
-    def reset_pos(self, room_num):
-        self.rect.x = starting_pos[room_num][0]
-        self.rect.y = starting_pos[room_num][1]
+    def die(self, room_num, deaths):
+        dead = False
+        if self.rect.bottom > window_height:
+            self.rect.bottom = window_height
+            self.dy = 0
+            self.reset_pos(room_num)
+            pygame.display.set_caption(f'nhallowed [{deaths}]')
+            dead = True
+        
+        return dead
         
     def debug(self, draw_hitboxes = False, draw_grid = False):
         self.draw_hitboxes = draw_hitboxes

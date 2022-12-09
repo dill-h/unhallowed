@@ -122,11 +122,12 @@ info_button = Button(window_width // 2 - 64, window_height // 2 + 64, 'info')
 back_button = Button(window_width // 2 - 64, window_height // 2 + 64, 'back')
 quit_button = Button(window_width // 2 - 64, window_height // 2 + 128, 'quit')
 # ------------------------------------------------------------------------------+
-def update_room(rn):
+def update_room(rn, caption = False):
     
     if path.exists(f'level/room{rn}_data'):
         with open(path.join('level', f'room{rn}_data'), 'rb') as pickle_in:
             room_data = pickle.load(pickle_in)
+            
+    if caption:
+        pygame.display.set_caption(f'nhallowed [{rn}]')
     return room_data
-
-room = World(update_room(0))

@@ -23,9 +23,10 @@ def main():
     main_menu = True #True
     info_menu = False #False
     room_number = 0
+    falls = 1
             
     # initialize player
-    player = Player(starting_pos[0][0], starting_pos[0][1])
+    player = Player(starting_pos[0][0], starting_pos[0][1], 0)
     # initialize background
     background_image = pygame.image.load('tile/bg_cave.png')
     background_image = pygame.transform.scale(background_image, (window_width, window_height)).convert() # resize image and convert to non-transparent to prevent lag
@@ -89,12 +90,7 @@ def main():
             # Player -------------------------------------------------+
             
             player.update(room)
-            '''
-            if player.get_pos()[0] > window_width:
-                room_number += 1
-                room = World(current_room_data)
-                player.set_pos(0,0)
-            '''
+
             player.debug() # draw_hitboxes, draw_grid
             
             if player.ground_attacking:
@@ -105,9 +101,12 @@ def main():
             if player.offscreen:
                 room_number += 1
                 player.offscreen = False
-                room_data = []
                 room = World(update_room(room_number))
                 player.reset_pos(room_number)
+                
+            if player.die(room_number, falls):
+                print("Oops")
+                falls += 1
             
         
         # Display ------------------------------------------------+
