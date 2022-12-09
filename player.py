@@ -29,6 +29,12 @@ class Player:
         
         # ---- ANIMATIONS ----
         
+        # HURT
+        self.reel_frame_start = time.time()
+        self.reel_anim_right = pygame.image.load(f'player/hurt/hurt0.png')
+        self.reel_anim_right = pygame.transform.scale(self.reel_anim_right, (100, 74))
+        self.reel_anim_left = pygame.transform.flip(self.reel_anim_right, True, False)
+        
         # IDLE
         self.idle_frame_start = time.time()
         self.idle_anim_right = []
@@ -137,6 +143,7 @@ class Player:
         self.ground_attacking = False
         self.aattackframe = 0
         self.air_attacking = False
+        self.reeling = False
         
         # pos creds
         self.offscreen = False
@@ -297,87 +304,94 @@ class Player:
     
         # Animation Handling -------------------------------------------------------------------------------------------------+
         
+        if not self.reeling:
         # GROUND ANIMATIONS
-        if self.runframe >= 6:
-            self.runframe = 0
-            
-        if self.idleframe >= 4:
-            self.idleframe = 0
-            
-        if self.djeffectframe >= 5:
-            self.djeffectframe = 4
-            
-        if self.left and not self.airborne and not self.ground_attacking:
-            window.blit(self.run_anim_left[self.runframe], (self.rect.x, self.rect.y))
-            if time.time() - self.run_frame_start > 0.1:
-                self.runframe += 1        
-                self.run_frame_start = time.time()
-            
-        elif self.right and not self.airborne and not self.ground_attacking:
-            window.blit(self.run_anim_right[self.runframe], (self.rect.x, self.rect.y))
-            if time.time() - self.run_frame_start > 0.1:
-                self.runframe += 1        
-                self.run_frame_start = time.time()
+            if self.runframe >= 6:
+                self.runframe = 0
                 
-        elif not self.ground_attacking and not self.airborne:
-            if self.direction == 'L':
-                if not key[pygame.K_s]:
-                    window.blit(self.idle_anim_left[self.idleframe], (self.rect.x, self.rect.y))
+            if self.idleframe >= 4:
+                self.idleframe = 0
+                
+            if self.djeffectframe >= 5:
+                self.djeffectframe = 4
+                
+            if self.left and not self.airborne and not self.ground_attacking:
+                window.blit(self.run_anim_left[self.runframe], (self.rect.x, self.rect.y))
+                if time.time() - self.run_frame_start > 0.1:
+                    self.runframe += 1        
+                    self.run_frame_start = time.time()
+                
+            elif self.right and not self.airborne and not self.ground_attacking:
+                window.blit(self.run_anim_right[self.runframe], (self.rect.x, self.rect.y))
+                if time.time() - self.run_frame_start > 0.1:
+                    self.runframe += 1        
+                    self.run_frame_start = time.time()
+                    
+            elif not self.ground_attacking and not self.airborne:
+                if self.direction == 'L':
+                    if not key[pygame.K_s]:
+                        window.blit(self.idle_anim_left[self.idleframe], (self.rect.x, self.rect.y))
+                    else:
+                        window.blit(self.crouch_anim_left[self.idleframe], (self.rect.x, self.rect.y))
+                    if time.time() - self.idle_frame_start > 0.15:
+                        self.idleframe += 1        
+                        self.idle_frame_start = time.time()
+                elif self.direction == 'R':
+                    if not key[pygame.K_s]:
+                        window.blit(self.idle_anim_right[self.idleframe], (self.rect.x, self.rect.y))
+                        
+                    else:
+                        window.blit(self.crouch_anim_right[self.idleframe], (self.rect.x, self.rect.y))
+                        
+                        
+                    if time.time() - self.idle_frame_start > 0.15:
+                        self.idleframe += 1        
+                        self.idle_frame_start = time.time()
+                        
+            # AIR ANIMATIONS
+            if self.jumpframe >= 7:
+                self.fallanim = True
+                
+                if self.fallframe >= 2:
+                    self.fallframe = 0
+                if self.direction == 'L' and not self.air_attacking and self.fallanim:
+                    window.blit(self.fall_anim_left[self.fallframe], (self.rect.x, self.rect.y))
+                    if time.time() - self.fall_frame_start > 0.1:
+                        self.fallframe += 1        
+                        self.fall_frame_start = time.time()
+                elif self.direction == 'R' and not self.air_attacking and self.fallanim:
+                    window.blit(self.fall_anim_right[self.fallframe], (self.rect.x, self.rect.y))
+                    if time.time() - self.fall_frame_start > 0.1:
+                        self.fallframe += 1        
+                        self.fall_frame_start = time.time()
+                
+            if self.airborne and not self.fallanim and not self.air_attacking:
+                if self.direction == 'L':
+                    window.blit(self.jump_anim_left[self.jumpframe], (self.rect.x, self.rect.y))
+                    if time.time() - self.jump_frame_start > 0.05:
+                        self.jumpframe += 1        
+                        self.jump_frame_start = time.time()
                 else:
-                    window.blit(self.crouch_anim_left[self.idleframe], (self.rect.x, self.rect.y))
-                if time.time() - self.idle_frame_start > 0.15:
-                    self.idleframe += 1        
-                    self.idle_frame_start = time.time()
-            elif self.direction == 'R':
-                if not key[pygame.K_s]:
-                    window.blit(self.idle_anim_right[self.idleframe], (self.rect.x, self.rect.y))
-                    
-                else:
-                    window.blit(self.crouch_anim_right[self.idleframe], (self.rect.x, self.rect.y))
-                    
-                    
-                if time.time() - self.idle_frame_start > 0.15:
-                    self.idleframe += 1        
-                    self.idle_frame_start = time.time()
-                    
-        # AIR ANIMATIONS
-        if self.jumpframe >= 7:
-            self.fallanim = True
+                    window.blit(self.jump_anim_right[self.jumpframe], (self.rect.x, self.rect.y))
+                    if time.time() - self.jump_frame_start > 0.05:
+                        self.jumpframe += 1        
+                        self.jump_frame_start = time.time()
             
-            if self.fallframe >= 2:
-                self.fallframe = 0
-            if self.direction == 'L' and not self.air_attacking and self.fallanim:
-                window.blit(self.fall_anim_left[self.fallframe], (self.rect.x, self.rect.y))
-                if time.time() - self.fall_frame_start > 0.1:
-                    self.fallframe += 1        
-                    self.fall_frame_start = time.time()
-            elif self.direction == 'R' and not self.air_attacking and self.fallanim:
-                window.blit(self.fall_anim_right[self.fallframe], (self.rect.x, self.rect.y))
-                if time.time() - self.fall_frame_start > 0.1:
-                    self.fallframe += 1        
-                    self.fall_frame_start = time.time()
-            
-        if self.airborne and not self.fallanim and not self.air_attacking:
-            if self.direction == 'L':
-                window.blit(self.jump_anim_left[self.jumpframe], (self.rect.x, self.rect.y))
-                if time.time() - self.jump_frame_start > 0.05:
-                    self.jumpframe += 1        
-                    self.jump_frame_start = time.time()
-            else:
-                window.blit(self.jump_anim_right[self.jumpframe], (self.rect.x, self.rect.y))
-                if time.time() - self.jump_frame_start > 0.05:
-                    self.jumpframe += 1        
-                    self.jump_frame_start = time.time()
-        
-        if self.doublejumped:
+            if self.doublejumped:
+                if self.left:
+                    window.blit(self.djeffect_anim_left[self.djeffectframe], (self.hitbox.right - 32, self.hitbox.bottom - 32))
+                elif self.right:
+                    window.blit(self.djeffect_anim_right[self.djeffectframe], (self.hitbox.left - 32, self.hitbox.bottom - 32))
+                    
+                if time.time() - self.djeffect_frame_start > 0.05:
+                    self.djeffectframe += 1
+                    self.djeffect_frame_start = time.time()
+        # Hurt state
+        elif self.reeling:
             if self.left:
-                window.blit(self.djeffect_anim_left[self.djeffectframe], (self.hitbox.right - 32, self.hitbox.bottom - 32))
+                window.blit(self.reel_anim_left, (self.rect.x, self.rect.y))
             elif self.right:
-                window.blit(self.djeffect_anim_right[self.djeffectframe], (self.hitbox.left - 32, self.hitbox.bottom - 32))
-                
-            if time.time() - self.djeffect_frame_start > 0.05:
-                self.djeffectframe += 1
-                self.djeffect_frame_start = time.time()
+                window.blit(self.reel_anim_right, (self.rect.x, self.rect.y))
             
                     
     def attack(self):
@@ -423,13 +437,15 @@ class Player:
         
         return dead
         
-    def debug(self, draw_hitboxes = False, draw_grid = False):
+    def debug(self, draw_hitboxes = False, draw_grid = False, hurt_toggle = False):
         self.draw_hitboxes = draw_hitboxes
         self.draw_grid = draw_grid
+        self.hurt_toggle = hurt_toggle
         
         if pygame.key.get_pressed()[pygame.K_BACKQUOTE]:
             self.draw_hitboxes = not self.draw_hitboxes
             # self.draw_grid = not self.draw_grid
+            self.hurt_toggle = not self.hurt_toggle
         
         if self.draw_hitboxes:
             pygame.draw.rect(window, (0,0,255), self.hitbox,2) # player hitbox display
@@ -441,3 +457,8 @@ class Player:
             for line in range(0, 32):
                 pygame.draw.line(window, (255, 255, 255), (0, line * tile_size), (window_width, line * tile_size))
                 pygame.draw.line(window, (255, 255, 255), (line * tile_size, 0), (line * tile_size, window_height))
+        
+        if self.hurt_toggle:
+            self.reeling = True
+        else:
+            self.reeling = False
