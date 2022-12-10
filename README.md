@@ -11,5 +11,5 @@ Credits
 - Slime sprites by [rvros](https://rvros.itch.io/pixel-art-animated-slime)
 - Title font by [Hewett Tsoi](https://www.dafont.com/alagard.font)
 - Main font by [Zeh Fernando](https://www.dafont.com/perfect-dos-vga-437.font)
-- Title theme by [xDeviruchi](https://xdeviruchi.itch.io/8-bit-fantasy-adventure-music-pack)
-- Main theme by [Etalify](https://www.youtube.com/watch?v=c9rMlxCwbm0)
+- Title theme and Ice theme by [xDeviruchi](https://xdeviruchi.itch.io/8-bit-fantasy-adventure-music-pack)
+- Cave theme by [Etalify](https://www.youtube.com/watch?v=c9rMlxCwbm0)

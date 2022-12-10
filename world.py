@@ -5,12 +5,21 @@ import time
 import pickle
 from os import path
 
+if __name__ == '__main__':
+    print("\nDon't run me, I'm shy!")
+    quit()
+
+
 tile_size = 32
 window_width = 32 * tile_size
 window_height = 18 * tile_size
 
 window = pygame.display.set_mode((window_width, window_height))
 
+# SOUNDS
+pygame.mixer.init()
+sfx_volume = 0.5
+slime_die = pygame.mixer.Sound('sound/slime_die.wav')
 # CAVE TILESET
 '''
 8 1 2
@@ -47,6 +56,26 @@ c_FBr = pygame.image.load('tile/c_FBr.png')
 # CAVE - ENEMIES
 c_slime = pygame.image.load('enemy/slime/idle/idle0.png')
 
+# SNOW - MAIN SURFACES
+s_O = pygame.image.load('tile/s_O.png')
+s_N = pygame.image.load('tile/s_N.png')
+s_NE = pygame.image.load('tile/s_NE.png')
+s_E = pygame.image.load('tile/s_E.png')
+s_SE = pygame.image.load('tile/s_SE.png')
+s_S = pygame.image.load('tile/s_S.png')
+s_SW = pygame.image.load('tile/s_SW.png')
+s_W = pygame.image.load('tile/s_W.png')
+s_NW = pygame.image.load('tile/s_NW.png')
+
+# SNOW - INNER CORNERS
+s_NEic = pygame.image.load('tile/s_NEic.png')
+s_SEic = pygame.image.load('tile/s_SEic.png')
+s_SWic = pygame.image.load('tile/s_SWic.png')
+s_NWic = pygame.image.load('tile/s_NWic.png')
+
+barrier = pygame.image.load('tile/barrier.png')
+
+
 
 tileset =  {1: c_SW,
             2: c_S,
@@ -65,7 +94,21 @@ tileset =  {1: c_SW,
             15: c_FBl,
             16: c_FBc,
             17: c_FBr,
-            18: c_slime
+            18: c_slime,
+            19: s_SW,
+            20: s_S,
+            21: s_SE,
+            22: s_W,
+            23: s_O,
+            24: s_E,
+            25: s_NW,
+            26: s_N,
+            27: s_NE,
+            28: s_NEic,
+            29: s_SEic,
+            30: s_SWic,
+            31: s_NWic,
+            32: barrier
             }
 enemy_group = pygame.sprite.Group()
 
@@ -114,6 +157,7 @@ class Slime(pygame.sprite.Sprite):
         self.rect.y = y0
         # vars
         self.dead = False
+        self.die_sound = True
         self.right = right
         self.move_counter = 0
         self.wait_counter = 0
@@ -166,7 +210,10 @@ class Slime(pygame.sprite.Sprite):
         
         
     def die(self):
-            self.dead = True
+        if self.die_sound:
+            pygame.mixer.Sound.play(slime_die).set_volume(sfx_volume)
+        self.die_sound = False
+        self.dead = True
         
     def update(self, hero, tiles = 2):
         self.hitbox = Rect(self.rect.x + 4, self.rect.y + 20, 56, 28)
@@ -191,12 +238,12 @@ class Slime(pygame.sprite.Sprite):
                 self.stopped = False
             
         if hero.ground_attacking:
-            if self.rect.colliderect(hero.hitbox_gattackL) and hero.direction == 'L' and hero.gattackframe >= 2:
+            if self.rect.colliderect(hero.hitbox_gattackL) and hero.direction == 'L' and 2 <= hero.gattackframe >= 3:
                 self.die()
-            if self.rect.colliderect(hero.hitbox_gattackR) and hero.direction == 'R' and hero.gattackframe >= 2:
+            if self.rect.colliderect(hero.hitbox_gattackR) and hero.direction == 'R' and 2 <= hero.gattackframe >= 3:
                 self.die()
         if hero.air_attacking:
-            if self.rect.colliderect(hero.hitbox_aattack) and hero.aattackframe >= 2:
+            if self.rect.colliderect(hero.hitbox_aattack) and 2 <= hero.aattackframe <= 3:
                 self.die()
                 
         # Animation handling ---------------------------------+
@@ -258,7 +305,7 @@ class Slime(pygame.sprite.Sprite):
 class Pickup:
     def __init__(self, pickup_type):
         foo = 'bar'
-
+# -------------------------------------------------------------+
 # Putting this here so I don't have to add yet another module to the import chain
 class Button:
     def __init__(self, x, y, name):
@@ -292,9 +339,13 @@ play_button = Button(window_width // 2 - 64, window_height // 2, 'play')
 info_button = Button(window_width // 2 - 64, window_height // 2 + 64, 'info')
 back_button = Button(window_width // 2 - 64, window_height // 2 + 64, 'back')
 quit_button = Button(window_width // 2 - 64, window_height // 2 + 128, 'quit')
+
+def draw_text(text, font, text_color, x, y):
+    img = font.render(text, True, text_color)
+    window.blit(img, (x, y))
 # ------------------------------------------------------------------------------+
 def update_room(rn, caption = False):
-    
+    enemy_group.empty()
     if path.exists(f'level/room{rn}_data'):
         with open(path.join('level', f'room{rn}_data'), 'rb') as pickle_in:
             room_data = pickle.load(pickle_in)
@@ -302,3 +353,8 @@ def update_room(rn, caption = False):
     if caption:
         pygame.display.set_caption(f'nhallowed [{rn}]')
     return room_data
+
+def motd(fnt):
+    draw_text('Thank you for playing Unhallowed!', fnt, (32,32,32), 92, 32)
+    draw_text('More good stuff to come in the future.', fnt, (32,32,32), 92, 56)
+    draw_text('In the meantime, please press either ESC or CTRL+W to exit.', fnt, (32,32,32), 92, 80)

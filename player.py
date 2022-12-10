@@ -11,12 +11,11 @@ room_number = 0
 window = pygame.display.set_mode((window_width, window_height))
 
 # PLAYER SOUNDS
-pygame.mixer.init()
-jump_sound = pygame.mixer.Sound('sound/double_jump.wav')
-djump_sound = pygame.mixer.Sound('sound/jump.wav')
+jump_sound = pygame.mixer.Sound('sound/jump.wav')
+djump_sound = pygame.mixer.Sound('sound/double_jump.wav')
 gattack_sound = pygame.mixer.Sound('sound/ground_attack.wav')
 aattack_sound = pygame.mixer.Sound('sound/air_attack.wav')
-sfx_volume = 0.5
+hurt_sound = pygame.mixer.Sound('sound/player_hurt.wav')
 
 class Player:
     def __init__(self, x0, y0, rn = 0):
@@ -135,14 +134,16 @@ class Player:
         self.doublejumped = True
         self.able_to_double_jump = False
         self.landing = True
+        self.bonk = False
         
         # combat flags
-        self.hp = 3
+        self.hp = 2
         self.gattackframe = 0
         self.ground_attacking = False
         self.aattackframe = 0
         self.air_attacking = False
         self.reeling = False
+        self.mercy = False
         
         
         # pos creds
@@ -157,7 +158,9 @@ class Player:
         self.vel_y = 0
         self.starting_pos = [[0 * tile_size, window_height - 4 * tile_size + 5],
                 [0 * tile_size, window_height - 15 * tile_size + 5],
-                [0 * tile_size, window_height - 10 * tile_size + 5]
+                [0 * tile_size, window_height - 10 * tile_size + 5],
+                [0 * tile_size, window_height - 14 * tile_size + 5],
+                [0 * tile_size, window_height - 4 * tile_size + 5],
                 ]
         
     def get_pos(self):
@@ -171,7 +174,7 @@ class Player:
         self.rect.x = self.starting_pos[room_num][0]
         self.rect.y = self.starting_pos[room_num][1]
     
-    def update(self, room):
+    def update(self, room, group):
         # HITBOXES
         # COLLISION/HURTBOX
         self.hitbox = Rect(self.rect.x + 25, self.rect.y + 10, self.hitbox_width, self.hitbox_height)
@@ -181,16 +184,19 @@ class Player:
         self.hitbox_aattack = Rect(self.hitbox.x - 30, self.hitbox.y, self.hitbox_width + 60, self.hitbox_height - 20)
         self.dx = 0
         self.dy = 0
+        if self.hp < 0:
+            self.hp = 0
         # input
         key = pygame.key.get_pressed()
         
-        if key[pygame.K_o] and not self.jumping and not self.ground_attacking and not self.airborne and not self.reeling:
+        if key[pygame.K_o] and not self.jumping and not self.ground_attacking and not self.airborne and not self.reeling and not self.bonk:
             self.vel_y = -17
             self.jumpframe = 0
             self.jumping = True
             self.airborne = True
             self.landing = False
-            pygame.mixer.Sound.play(jump_sound).set_volume(sfx_volume)
+            pygame.mixer.Sound.play(jump_sound)
+            pygame.mixer.Sound.set_volume(jump_sound, sfx_volume)
             
         # if key[pygame.K_o] and self.jumping and self.fall and not self.doublejumped:
         for event in pygame.event.get():
@@ -203,11 +209,13 @@ class Player:
                     self.djeffectframe = 0
                     self.doublejumped = True
                     self.fallanim = False
-                    pygame.mixer.Sound.play(djump_sound).set_volume(sfx_volume)
+                    pygame.mixer.Sound.play(djump_sound)
+                    pygame.mixer.Sound.set_volume(djump_sound, sfx_volume)
                     
                 if event.key == pygame.K_k and not self.reeling:
                     if self.airborne and not self.ground_attacking and not self.air_attacking and not self.landing:
-                        pygame.mixer.Sound.play(aattack_sound).set_volume(sfx_volume)
+                        pygame.mixer.Sound.play(aattack_sound)
+                        pygame.mixer.Sound.set_volume(aattack_sound, sfx_volume)
                            
                     elif not self.airborne and not self.ground_attacking and not self.air_attacking:
                         pygame.mixer.Sound.play(gattack_sound).set_volume(sfx_volume)
@@ -261,6 +269,7 @@ class Player:
         self.jumping = True
         self.airborne = True
         self.landing = False
+        self.bonk = False
         #self.jumpframe = 7
         for tile in room.tile_list:
             #check for collision in x direction
@@ -290,10 +299,15 @@ class Player:
                     self.jumpframe = 0
                     self.landing = False
                     self.reeling = False
-                
-            # check if landing is imminent
-            #if tile[1].colliderect(self.hitbox.x, self.hitbox.y + 20, self.hitbox_width, self.hitbox_height):
-                #self.landing = True
+                    
+            # check if player is in a 2-tile-high place
+            if tile[1].colliderect(self.hitbox.x, self.hitbox.y - 30, self.hitbox_width, 30):
+                self.bonk = True
+        #check if player needs to be damaged
+        for enemy in group:
+            if not enemy.dead and enemy.hitbox.colliderect(self.hitbox.x + 20, self.hitbox.y + 5, self.hitbox_width - 40, self.hitbox_height - 5):
+                if not self.ground_attacking and not self.air_attacking:
+                    self.hurt()
         
         #update player coordinates
         self.rect.x += self.dx
@@ -414,7 +428,7 @@ class Player:
             if self.gattackframe >= 5:
                 self.gattackframe = 0
                 self.ground_attacking = False
-        else:
+        elif not self.landing:
             self.air_attacking = True
             if self.direction == 'L':
                 window.blit(self.aattack_anim_left[self.aattackframe], (self.rect.x, self.rect.y))
@@ -431,9 +445,10 @@ class Player:
                 self.air_attacking = False
                 
     def hurt(self):
-        self.hp -= 1
         hit_x_pos = self.rect.centerx
         if not self.reeling:
+            pygame.mixer.Sound.play(hurt_sound).set_volume(sfx_volume)
+            self.hp -= 1
             self.vel_y = -14
             ouch_counter = 60
             self.reeling = True
@@ -447,20 +462,23 @@ class Player:
                         self.rect.x -= 1
                 ouch_counter -= 1
         
-                
     def die(self, room_num, deaths):
         dead = False
-        if self.rect.bottom > window_height:
-            self.rect.bottom = window_height
-            self.dy = 0
+        if self.rect.bottom > window_height or self.hp == 0:
+            #self.rect.bottom = window_height
+            #self.dy = 0
+            self.reeling = True
             self.reset_pos(room_num)
             pygame.display.set_caption(f'nhallowed [{deaths}]')
             dead = True
-        
+            if dead:
+                pygame.mixer.Sound.set_volume(hurt_sound, sfx_volume)
+                pygame.mixer.Sound.play(hurt_sound)
+                self.hp = 2
         return dead
         
     # Player Debug --------------------------------------------+
-    def debug(self, draw_hitboxes = False, draw_grid = False, hurt_toggle = False):
+    def debug(self, group, draw_hitboxes = False, draw_grid = False, hurt_toggle = False):
         self.draw_hitboxes = draw_hitboxes
         self.draw_grid = draw_grid
         self.hurt_toggle = hurt_toggle
@@ -475,14 +493,15 @@ class Player:
             pygame.draw.rect(window, (255,0,0), self.hitbox_gattackR,1) # ground attacks
             pygame.draw.rect(window, (255,0,0), self.hitbox_gattackL, 1)
             pygame.draw.rect(window, (255,255,0), self.hitbox_aattack, 1) # air attack
+            pygame.draw.rect(window, (127, 127, 127), (self.hitbox.x, self.hitbox.y - 30, self.hitbox_width, 30), 1) # bonk hitbox
+            
+            for enemy in group:
+                pygame.draw.rect(window, (255,0,0), enemy.hitbox, 1)
         
         if self.draw_grid:
             for line in range(0, 32):
                 pygame.draw.line(window, (255, 255, 255), (0, line * tile_size), (window_width, line * tile_size))
                 pygame.draw.line(window, (255, 255, 255), (line * tile_size, 0), (line * tile_size, window_height))
-        
-        if self.hurt_toggle:
-            self.hurt()
        # else:
         #    self.reeling = False
         

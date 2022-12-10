@@ -12,25 +12,31 @@ def main():
     pygame.display.set_caption('nhallowed')
     icon = pygame.image.load('ico.png')
     pygame.display.set_icon(icon)
+    font = pygame.font.Font(path.join('font', 'perfectdos.ttf'), 24)
 
     # Sound ------------------------------------------------------+
-    music_volume = 0.0 #0.5
+    music_volume = 0.5 #0.5
     pygame.mixer.music.load('sound/title.ogg')
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play()
             
     # game variables
-    main_menu = not True #True
+    main_menu = True #True
     info_menu = False #False
     room_number = 0 #0
     falls = 1
-    hearts = 3
             
     # initialize player
     player = Player(0, window_height - (4*32+5), 0)
-    # initialize background
-    background_image = pygame.image.load('tile/bg_cave.png')
-    background_image = pygame.transform.scale(background_image, (window_width, window_height)).convert() # resize image and convert to non-transparent to prevent lag
+    
+    # initialize backgrounds
+    bg_cave = pygame.image.load('tile/bg_cave.png')
+    bg_cave = pygame.transform.scale(bg_cave, (window_width, window_height)).convert() # resize image and convert to non-transparent to prevent lag
+    cave_levels = True
+    bg_snow = pygame.image.load('tile/bg_snow.png')
+    snow_levels = False
+    bg_snow = pygame.transform.scale(bg_snow, (window_width, window_height)).convert()
+    
     main_menu_bg = pygame.image.load('titlescreen/bg_titlescreen.png')
     main_menu_bg = pygame.transform.scale(main_menu_bg, (window_width, window_height)).convert()
     info_menu_bg = pygame.image.load('titlescreen/bg_infoscreen.png')
@@ -44,9 +50,6 @@ def main():
 
     # initialize room
     room = World(update_room(room_number))
-    
-    #initialize enemies
-
     run = True
     while run:
         # runs game at given fps
@@ -82,19 +85,30 @@ def main():
                     fade_out_menu(200)
                     pygame.quit()
                     break
+                
+        elif room_number >= 4 and snow_levels == False:
+            pygame.mixer.music.fadeout(1000)
+            pygame.mixer.music.load('sound/ice.wav')
+            pygame.mixer.music.set_volume(music_volume)
+            pygame.mixer.music.play(fade_ms=1500)
+            snow_levels = True
 
     # Main game loop ---------------------------------------------+
         else:
             # Room -----------------------------------------------+
-            window.blit(background_image, (0, 0))
+            if room_number < 4:
+                window.blit(bg_cave, (0, 0))
+            elif 4 <= room_number:
+                window.blit(bg_snow, (0, 0))
+                motd(font)
             
             room.draw()
-            
+            draw_text(f'HP:{"[]" * player.hp}', font, (237,237,237), 16, 16)
             # Player ---------------------------------------------+
             
-            player.update(room)
+            player.update(room, enemy_group)
 
-            player.debug() # draw_hitboxes, draw_grid
+            player.debug(enemy_group) # draw_hitboxes, draw_grid
             
             if player.ground_attacking:
                 player.attack()
@@ -108,8 +122,7 @@ def main():
                 player.reset_pos(room_number)
                 
             if player.die(room_number, falls):
-                print("Oops")
-                falls += 1
+                    falls += 1
                 
         # Enemies ------------------------------------------------+
         
