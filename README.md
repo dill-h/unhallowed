@@ -6,6 +6,7 @@ Use the bundled exe or run in your favorite IDE, no judgment here.
 
 Credits
 -------
+- Based on a tutorial by [Russ](https://www.youtube.com/watch?v=Ongc4EVqRjo)
 - Adventurer sprites by [rvros](https://rvros.itch.io/animated-pixel-hero)
 - Double jump effect by [Viktor](https://v-ktor.itch.io/pixelated-attackhit-animations)
 - Tileset by [Shackhal](https://shackhal.itch.io/multi-platformer-tileset)
