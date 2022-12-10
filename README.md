@@ -1,6 +1,7 @@
 unhallowed
 ==========
 Requires [pygame](https://pypi.org/project/pygame/).
+Use the bundled exe or run in your favorite IDE, no judgment here.
 
 Credits
 -------
