@@ -297,11 +297,6 @@ class Slime(pygame.sprite.Sprite):
                         self.moveframe += 1        
                         self.move_frame_start = time.time()
 
-            
-        
-            
-
-
 class Pickup:
     def __init__(self, pickup_type):
         foo = 'bar'

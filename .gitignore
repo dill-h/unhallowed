@@ -1,3 +1,4 @@
 *.bak
 *.pyc
 uh_level_editor.py
+__pycache__
