@@ -1,7 +1,6 @@
 unhallowed
-=======
-Requires [pygame](https://pypi.org/project/pygame/)
-
+==========
+Requires [pygame](https://pypi.org/project/pygame/).
 
 Credits
 -------
