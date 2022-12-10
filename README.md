@@ -1,5 +1,7 @@
 unhallowed
 ==========
+<img src="sc0.png" width="256" height="144" /><img src="sc1.png" width="256" height="144" />
+
 Requires [pygame](https://pypi.org/project/pygame/).
 
 Use the bundled exe or run in your favorite IDE, no judgment here.
